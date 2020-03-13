@@ -1,7 +1,7 @@
 'use strict';
-function start() {
+function start(width = 100,height = 100,light = 64) {
     const start = new Date().getTime();
-    draw();
+    draw(width,height ,light);
     const end = new Date().getTime();
     console.log('SecondWay: '+(end - start)+' ms');
  
@@ -11,8 +11,10 @@ function putPx(x, y, ctx) {
     ctx.fillRect(x, y, 1, 1);
 }
 class Canvas {
-    constructor(can) {
+    constructor(can,w = 1024,h = 1024) {
         this.c = document.getElementById(can);
+        this.c.width = w;
+        this.c.height = h;
         this.ctx = this.c.getContext("2d");
     }
     putPx(x, y) {
@@ -24,10 +26,10 @@ class Canvas {
         this.ctx.fillRect(x, y, 1, 1);
     }
 }
-function draw() {
+function draw(width,height ,light ) {
 
-    let canvas = new Canvas("canvas");
-    console.log('P6 ' + WIDTH + ' ' + HEIGHT + ' 255 ');
+    let canvas = new Canvas("canvas",width,height);
+    console.log('P6 ' + width + ' ' + height + ' 255 ');
     let g = (new Vector(-6, -16, 0)).norm();
     let a = (new Vector(0, 0, 1)).vprod(g).norm().prod(.002);
     let b = g.vprod(a).norm().prod(.002);
@@ -35,10 +37,10 @@ function draw() {
 
     let t = a.prod((rnd() - .5) * 99).sum(b.prod((rnd() - .5) * 99));
 
-    for (let y = WIDTH; y--;) {
-        for (let x = HEIGHT; x--;) {
+    for (let y = 0;y<width; y++) {
+        for (let x = 0;x<height; x++) {
             let p = v5;
-            for (let r = 32; r--;) {
+            for (let r = light; r--;) {
                 let t = a.prod((rnd() - .5) * 99).sum(b.prod((rnd() - .5) * 99));
 
              p = sampler((v6).sum(t),
@@ -49,7 +51,7 @@ function draw() {
             ///canvas.putPx(x, y);
             canvas.putPxC(x, y, p.x, p.y, p.z);
         }
-       // console.log( y);
+        console.log( y);
     }
 }
 const WIDTH = 1024;
@@ -126,7 +128,7 @@ const G = [
 
 const rnd = Math.random;
 
-let v0 = new Vector(0, 0, 1);
+
 
 function tracer(o, d, ctx) {
     ctx.t = 1e9;
@@ -159,11 +161,13 @@ function tracer(o, d, ctx) {
     }
     return m;
 }
-
-let v1 = new Vector(.7, .6, 1);
-let v2 = new Vector(3, 1, 1);
-let v3 = new Vector(3, 3, 3);
+let v0 = new Vector(0, 0, 1);
+let v1 = new Vector(.7, .6, 10);
+let v2 = new Vector(4, 1, 1);
+let v3 = new Vector(4, 3, 3);
 let v4 = new Vector(0, 0, 0);
+let v5 = new Vector(13, 13, 13);
+let v6 = new Vector(14, 16, 8);
 
 function sampler(o, d) {
     let ctx = {
@@ -202,7 +206,6 @@ function sampler(o, d) {
     return ((b > 0) ? new Vector(p, p, p) : v4).sum(sampler(h, r).prod(.5));
 }
 
-let v5 = new Vector(13, 13, 13);
-let v6 = new Vector(17, 16, 8);
+
 
 
