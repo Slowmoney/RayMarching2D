@@ -1,211 +1,147 @@
-'use strict';
-function start(width = 100,height = 100,light = 64) {
-    const start = new Date().getTime();
-    draw(width,height ,light);
-    const end = new Date().getTime();
-    console.log('SecondWay: '+(end - start)+' ms');
- 
-}
-function putPx(x, y, ctx) {
 
-    ctx.fillRect(x, y, 1, 1);
-}
-class Canvas {
-    constructor(can,w = 1024,h = 1024) {
-        this.c = document.getElementById(can);
-        this.c.width = w;
-        this.c.height = h;
-        this.ctx = this.c.getContext("2d");
-    }
-    putPx(x, y) {
+let playing = false;
 
-        this.ctx.fillRect(x, y, 1, 1);
-    }
-    putPxC(x, y, r, g, b) {
-        this.ctx.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
-        this.ctx.fillRect(x, y, 1, 1);
-    }
-}
-function draw(width,height ,light ) {
+var prev = new Date().getTime();
+function main() {
+    window.canvas = document.getElementById('canvas');
+    canvas.width = 800;
+    canvas.height = 800;
+    window.ctx = canvas.getContext('2d');
+    window.cam = new Camera(500, 500, 0);
+    window.obj = [];
+    obj.push(new Circle(100, 500, 40));
+    // obj.push(new Circle(600, 100, 40));
+    canvas.addEventListener("click", (e) => {
+      // console.log(e);
+        cam.step();
+        requestAnimationFrame(loop);
+    });
+    canvas.addEventListener("mousemove",(e)=>{
+    //    console.log(e);
+    //    console.log(e.offsetX-cam.x);
+    //    console.log(e.offsetY-cam.y);
+      //  console.log((cam.x-e.offsetX), (cam.y -e.offsetY  ));
 
-    let canvas = new Canvas("canvas",width,height);
-    console.log('P6 ' + width + ' ' + height + ' 255 ');
-    let g = (new Vector(-6, -16, 0)).norm();
-    let a = (new Vector(0, 0, 1)).vprod(g).norm().prod(.002);
-    let b = g.vprod(a).norm().prod(.002);
-    let c = a.sum(b).prod(-256).sum(g);
-
-    let t = a.prod((rnd() - .5) * 99).sum(b.prod((rnd() - .5) * 99));
-
-    for (let y = 0;y<width; y++) {
-        for (let x = 0;x<height; x++) {
-            let p = v5;
-            for (let r = light; r--;) {
-                let t = a.prod((rnd() - .5) * 99).sum(b.prod((rnd() - .5) * 99));
-
-             p = sampler((v6).sum(t),
-                    t.prod(-1).sum(a.prod(rnd() + x).sum(b.prod(rnd() + y)).sum(c).prod(16)).norm()
-                ).prod(3.5).sum(p);
-            }
-            
-            ///canvas.putPx(x, y);
-            canvas.putPxC(x, y, p.x, p.y, p.z);
-        }
-        console.log( y);
-    }
-}
-const WIDTH = 1024;
-const HEIGHT = 1024;
-
-const STAT = {
-    constr: 0,
-    sum: 0,
-    prod: 0,
-    sprod: 0,
-    vprod: 0,
-    norm: 0,
-    m0: 0,
-    m1: 0,
-    m2: 0
-};
-
-class Vector {
-    constructor(a, b, c) {
-        this.x = a;
-        this.y = b;
-        this.z = c;
-        //STAT.constr++;
-    }
-
-    sum(r) {
-        //STAT.sum++;
-        return new Vector(this.x + r.x, this.y + r.y, this.z + r.z);
-    }
-
-    prod(r) {
-        //STAT.prod++;
-        return new Vector(this.x * r, this.y * r, this.z * r);
-    }
-
-    sprod(r) {
-        //STAT.sprod++;
-        return this.x * r.x + this.y * r.y + this.z * r.z;
-    }
-
-    vprod(r) {
-        //STAT.vprod++;
-        return new Vector(
-            this.y * r.z - this.z * r.y,
-            this.z * r.x - this.x * r.z,
-            this.x * r.y - this.y * r.x
-        );
-    }
-
-    norm() {
-        //STAT.norm++;
-        let fix = 1 / Math.sqrt(
-            this.x * this.x +
-            this.y * this.y +
-            this.z * this.z
-        );
-
-        return new Vector(this.x * fix, this.y * fix, this.z * fix);
-        //return this.prod(1 / Math.sqrt(this.sprod(this)));
-    }
+        cam.a = Math.atan2(cam.y-e.offsetY,cam.x-e.offsetX)* 180/Math.PI;
+       
+        requestAnimationFrame(loop);
+    });
 }
 
-const G = [
-    0x0003C712,  // 00111100011100010010
-    0x00044814,  // 01000100100000010100
-    0x00044818,  // 01000100100000011000
-    0x0003CF94,  // 00111100111110010100
-    0x00004892,  // 00000100100010010010
-    0x00004891,  // 00000100100010010001
-    0x00038710,  // 00111000011100010000
-    0x00000010,  // 00000000000000010000
-    0x00000010,  // 00000000000000010000
-];
-
-const rnd = Math.random;
+function loop(time) {
 
 
 
-function tracer(o, d, ctx) {
-    ctx.t = 1e9;
-    let m = 0;
-    let p = -o.z / d.z;
+    draw();
+    update();
 
-    if (.01 < p) {
-        ctx.t = p;
-        ctx.n = v0;
-        m = 1;
-    }
 
-    for (let k = 19; k--;) {
-        for (let j = 9; j--;) {
-            if (G[j] & 1 << k) {
-                let p = o.sum(new Vector(-k, 0, -j - 4));
-                let b = p.sprod(d);
-                let c = p.sprod(p) - 1;
-                let q = b * b - c;
-                if (q > 0) {
-                    let s = -b - Math.sqrt(q);
-                    if ((s < ctx.t) && (s > .01)) {
-                        ctx.t = s;
-                        ctx.n = p.sum(d.prod(ctx.t)).norm();
-                        m = 2;
-                    }
-                }
+}
+
+function draw() {
+    // let data = render(width,height);
+    //  context.putImageData(new ImageData(data, width, height), 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const i of obj) {
+        let tx = cam.x;
+        let ty = cam.y
+        for (let index = 0; index < 10; index++) {
+            let d = i.distance(cam.x, cam.y);
+            cam.draw(d);
+            cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
+            cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
+            if (d > 500) {
+                break;
             }
         }
-    }
-    return m;
-}
-let v0 = new Vector(0, 0, 1);
-let v1 = new Vector(.7, .6, 10);
-let v2 = new Vector(4, 1, 1);
-let v3 = new Vector(4, 3, 3);
-let v4 = new Vector(0, 0, 0);
-let v5 = new Vector(13, 13, 13);
-let v6 = new Vector(14, 16, 8);
+        cam.x = tx;
+        cam.y = ty;
 
-function sampler(o, d) {
-    let ctx = {
-        t: .0,
-        n: null
-    };
-
-    let m = tracer(o, d, ctx);
-    if (!m) {
-        //STAT.m0++;
-        return (v1).prod(Math.pow(1 - d.z, 4));
+        i.draw();
     }
 
-    let h = o.sum(d.prod(ctx.t));
-    let l = (new Vector(9 + rnd(), 9 + rnd(), 16)).sum(h.prod(-1)).norm();
-    let r = d.sum(ctx.n.prod(ctx.n.sprod(d) * -2));
-
-    let b = l.sprod(ctx.n);
-    if (b < 0 || tracer(h, l, ctx)) {
-        b = 0;
+    if (playing) {
+        requestAnimationFrame(loop);
     }
-
-    if (m & 1) {
-        //STAT.m1++;
-        h = h.prod(.2);
-        return ((Math.trunc(Math.ceil(h.x) + Math.ceil(h.y)) & 1)
-            ? v2
-            : v3
-        ).prod(b * .2 + .1);
-    }
-
-    //STAT.m2++;
-
-    let p = (b > 0) ? Math.pow(l.sprod(r), 99) : 0;
-
-    return ((b > 0) ? new Vector(p, p, p) : v4).sum(sampler(h, r).prod(.5));
 }
 
+function update(dt) {
+
+    let time = new Date().getTime();
+   // console.log(time - prev);
+    prev = time;
 
 
 
+
+}
+
+requestAnimationFrame(loop);
+
+
+function render(width, height) {
+    let data = new Uint8ClampedArray(4 * width * height);
+    for (let w = 0; w < width; w++) {
+        for (let h = 0; h < height; h++) {
+
+
+        }
+
+    }
+    return data;
+}
+
+function Get2DDistance() {
+
+}
+
+function drawCircle(x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2, true);
+    ctx.stroke();
+}
+
+function drawLine(x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+
+class Circle {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+    }
+    distance = (x, y) => {
+        return Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2) - this.r;
+    }
+    draw = () => {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, true);
+        ctx.stroke();
+    }
+}
+
+
+class Camera {
+    constructor(x, y, a) {
+        this.x = x;
+        this.y = y;
+        this.a = a;
+        this.spx = x;
+        this.spy = y;
+    }
+    draw = (distance) => {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y,Math.round(distance) , 0, Math.PI * 2, true);
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - Math.cos(this.a / 180 * Math.PI) * distance, this.y - Math.sin(this.a / 180 * Math.PI) * distance);
+        ctx.stroke();
+    }
+    step = () => {
+        this.a++
+
+    }
+}
