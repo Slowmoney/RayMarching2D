@@ -4,31 +4,54 @@ let playing = false;
 var prev = new Date().getTime();
 function main() {
     window.canvas = document.getElementById('canvas');
-    canvas.width = 800;
-    canvas.height = 800;
+    canvas.width = 1800;
+    canvas.height = 1800;
     window.ctx = canvas.getContext('2d');
-    window.cam = new Camera(500, 500, 0);
+    window.cam = new Camera(800, 800, 0);
     window.obj = [];
     window.pux = [];
+    window.lines = [];
+    // obj.push(new Plus(100, 500, 40));
     obj.push(new Circle(600, 500, 40));
-    obj.push(new Box(400, 400, 100));
-    obj.push(new Line(700, 200, 100, 100));
-    obj.push(new Triangle(100, 800, 100, 100, 300, 400));
+    obj.push(new Box(300, 700, 100));
+   obj.push(new Line(0, 1800, 1500, 0));
+    obj.push(new Triangle(100, 800, 100, 100, 200, 400));
     obj.push(new Circle(600, 600, 40));
     canvas.addEventListener("click", (e) => {
         // console.log(e);
-        cam.step();
-        requestAnimationFrame(loop);
+      //  cam.step();
+       // requestAnimationFrame(loop);
     });
+    document.addEventListener("keydown", (e) => {
+         
+        switch (e.code) {
+            case "KeyW":
+                cam.up();
+                break;
+                case "KeyS":
+                    cam.down();
+                    break;
+                    case "KeyD":
+                cam.right();
+                break;
+                case "KeyA":
+                cam.left();
+                break;
+            default:
+                break;
+        }
+      
+    });
+    document.addEventListener("keyup", (e) => {  requestAnimationFrame(loop);});
     canvas.addEventListener("mousemove", (e) => {
         //    console.log(e);
         //    console.log(e.offsetX-cam.x);
         //    console.log(e.offsetY-cam.y);
         //  console.log((cam.x-e.offsetX), (cam.y -e.offsetY  ));
 
-        cam.a = Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI;
+        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI)-30;
 
-        requestAnimationFrame(loop);
+       requestAnimationFrame(loop);
     });
 }
 
@@ -47,43 +70,62 @@ function draw() {
     //  context.putImageData(new ImageData(data, width, height), 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-for (const i of obj) {
-        i.draw();
+    for (const i of obj) {
+        //    i.draw();
 
     }
-
-    let tx = cam.x;
-    let ty = cam.y
-    for (let index = 0; index < 1000; index++) {
-        let arr = [];
-        for (const i of obj) {
-            arr.push(i.distance(cam.x, cam.y));
-        }
-        let d = Math.min.apply(Math, arr);
-        cam.draw(d);
-        cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
-        cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
-        if (d > 500) {
-            break;
-        }
-        if(d < 0.001){
-           
-            break;
-            
-        }
-       
-    }
-    pux.push([cam.x,cam.y]);
+    let ta = cam.a;
     
-    cam.x = tx;
-    cam.y = ty;
+    for (let x = 0; x < 60; x++) {
+        cam.step();
+        let tx = cam.x;
+        let ty = cam.y
+        let totalDist = 0;
+        for (var index = 0; index < 1000; index++) {
+            let arr = [];
+            for (const i of obj) {
+                arr.push(i.distance(cam.x, cam.y));
+            }
+            var d = Math.min.apply(Math, arr);
+
+            cam.draw(d);
+            cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
+            cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
+            if (d > 1000) {
+                break;
+            }
+            if (d < 1e-1) {
+
+                break;
+
+            }
+            totalDist += d;
+
+        }
+
+        let gray = 1 - (index)/ 100;
+        //console.log(gray);
+        pux.push([cam.x, cam.y, gray]);
+
+        cam.x = tx;
+        cam.y = ty;
+        lines.push(gray);
+    }
+
+    cam.a = ta;
 
     for (const i of pux) {
-       drawPix(i[0],i[1]);
+        drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
 
     }
+    for (let i = 0; i < lines.length; i++) {
+        
+        
+    let h = 500*lines[i];
+        drawBox(i*15,(1000+300)-(h/2),15,h,{ "r": 120*lines[i] , "g": 90*lines[i] , "b": 40 *lines[i] }); //800 = 500
 
-    
+    }
+    lines = [];
     if (playing) {
         requestAnimationFrame(loop);
     }
@@ -118,21 +160,29 @@ function render(width, height) {
 function Get2DDistance() {
 
 }
-function drawPix(x, y) {
+function drawPix(x, y, color) {
     ctx.beginPath();
-    ctx.fillStyle = 'red';
-    ctx.fillRect(x,y,2,2);
+
+    ctx.strokeStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+    ctx.fillRect(x, y, 2, 2);
     ctx.stroke();
 }
+function drawBox(x, y,x1, y1, color) {
+    ctx.beginPath();
 
+    ctx.fillStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+    ctx.fillRect(x, y, x1, y1);
+    ctx.stroke();
+}
 function drawCircle(x, y, r) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2, true);
     ctx.stroke();
 }
 
-function drawLine(x1, y1, x2, y2) {
+function drawLine(x1, y1, x2, y2,color = { "r": 255 , "g": 80 , "b": 80 } ) {
     ctx.beginPath();
+    ctx.strokeStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
@@ -294,6 +344,44 @@ function clamp(val, min, max) {
     return Math.min(Math.max(min, val), max);
 
 }
+class Sin {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+
+    }
+    distance = (x, y) => {
+        // return Math.max(Math.abs(x),Math.abs(y))-1;
+        // return Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2) - 10;
+        return 8;
+    }
+    draw = () => {
+        // ctx.beginPath();
+        //ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, true);
+        // ctx.stroke();
+    }
+}
+class Plus {
+    constructor(x, y, r) {
+        this.x = x;
+        this.y = y;
+
+    }
+    distance = (x, y) => {
+        // ( in vec2 p, in float w, in float r )
+
+        let px = Math.abs(x);
+        let py = Math.abs(y);
+        //  return length(p-Math.min(px+py,4)*0.5) - 10;
+        return Math.sqrt(x ** 2 + y ** 2 - 100) - 1;
+
+    }
+    draw = () => {
+        // ctx.beginPath();
+        //ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, true);
+        // ctx.stroke();
+    }
+}
 class Circle {
     constructor(x, y, r) {
         this.x = x;
@@ -365,7 +453,20 @@ class Camera {
         ctx.stroke();
     }
     step = () => {
+        
+        if(this.a >=360){this.a=0;}
         this.a++
-
+    }
+    up = ()=>{
+        this.y--;
+    }
+    down = ()=>{
+        this.y++;
+    }
+    right = ()=>{
+        this.x++;
+    }
+    left = ()=>{
+        this.x--;
     }
 }
