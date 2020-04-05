@@ -9,21 +9,22 @@ function main() {
     window.ctx = canvas.getContext('2d');
     window.cam = new Camera(500, 500, 0);
     window.obj = [];
-    obj.push(new Circle(100, 500, 40));
-    // obj.push(new Circle(600, 100, 40));
+    // obj.push(new Circle(100, 500, 40));
+    obj.push(new Box(400, 400, 100));
+    //obj.push(new Circle(600, 600, 40));
     canvas.addEventListener("click", (e) => {
-      // console.log(e);
+        // console.log(e);
         cam.step();
         requestAnimationFrame(loop);
     });
-    canvas.addEventListener("mousemove",(e)=>{
-    //    console.log(e);
-    //    console.log(e.offsetX-cam.x);
-    //    console.log(e.offsetY-cam.y);
-      //  console.log((cam.x-e.offsetX), (cam.y -e.offsetY  ));
+    canvas.addEventListener("mousemove", (e) => {
+        //    console.log(e);
+        //    console.log(e.offsetX-cam.x);
+        //    console.log(e.offsetY-cam.y);
+        //  console.log((cam.x-e.offsetX), (cam.y -e.offsetY  ));
 
-        cam.a = Math.atan2(cam.y-e.offsetY,cam.x-e.offsetX)* 180/Math.PI;
-       
+        cam.a = Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI;
+
         requestAnimationFrame(loop);
     });
 }
@@ -68,7 +69,7 @@ function draw() {
 function update(dt) {
 
     let time = new Date().getTime();
-   // console.log(time - prev);
+    // console.log(time - prev);
     prev = time;
 
 
@@ -115,6 +116,8 @@ class Circle {
         this.r = r;
     }
     distance = (x, y) => {
+
+
         return Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2) - this.r;
     }
     draw = () => {
@@ -123,7 +126,43 @@ class Circle {
         ctx.stroke();
     }
 }
+class Box {
+    constructor(x, y, s) {
+        this.x = x;
+        this.y = y;
+        this.s = s;
 
+    }
+    distance = (x, y) => {
+
+
+
+
+
+
+        const offsetX = Math.abs(x - this.x) - this.s / 2;
+        const offsetY = Math.abs(y - this.y) - this.s / 2;
+
+        const offsetMaxX = Math.max(offsetX, 0);
+        const offsetMaxY = Math.max(offsetY, 0);
+        const offsetMinX = Math.min(offsetX, 0);
+        const offsetMinY = Math.min(offsetY, 0);
+
+        const unsignedDst = Math.sqrt(offsetMaxX * offsetMaxX + offsetMaxY * offsetMaxY);
+        const dstInsideBox = Math.max(offsetMinX, offsetMinY);
+
+        return unsignedDst + dstInsideBox;
+
+
+
+
+    }
+    draw = () => {
+        ctx.beginPath();
+        ctx.rect(this.x-this.s/2, this.y-this.s/2,this.s, this.s);
+        ctx.stroke();
+    }
+}
 
 class Camera {
     constructor(x, y, a) {
@@ -135,7 +174,7 @@ class Camera {
     }
     draw = (distance) => {
         ctx.beginPath();
-        ctx.arc(this.x, this.y,Math.round(distance) , 0, Math.PI * 2, true);
+        ctx.arc(this.x, this.y, Math.round(distance), 0, Math.PI * 2, true);
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(this.x - Math.cos(this.a / 180 * Math.PI) * distance, this.y - Math.sin(this.a / 180 * Math.PI) * distance);
         ctx.stroke();
