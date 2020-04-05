@@ -9,9 +9,10 @@ function main() {
     window.ctx = canvas.getContext('2d');
     window.cam = new Camera(500, 500, 0);
     window.obj = [];
-     obj.push(new Circle(100, 500, 40));
-     obj.push(new Box(400, 400, 100));
-     obj.push(new Line(100, 600, 100,100));
+    window.pux = [];
+    obj.push(new Circle(600, 500, 40));
+    obj.push(new Box(400, 400, 100));
+    obj.push(new Line(700, 200, 100, 100));
     obj.push(new Triangle(100, 800, 100, 100, 300, 400));
     obj.push(new Circle(600, 600, 40));
     canvas.addEventListener("click", (e) => {
@@ -45,33 +46,44 @@ function draw() {
     // let data = render(width,height);
     //  context.putImageData(new ImageData(data, width, height), 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-     
-    
-    
-        let tx = cam.x;
-        let ty = cam.y
-        for (let index = 0; index < 100; index++) {
-           let arr = [];
-           for (const i of obj) {
-            arr.push(i.distance(cam.x, cam.y));
-           }
-            let d = Math.min.apply(Math,arr);
-            cam.draw(d);
-            cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
-            cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
-            if (d > 500) {
-                break;
-            }
-        }
-        cam.x = tx;
-        cam.y = ty;
 
-        
-    
-    for (const i of obj) {
-       i.draw();
-        
+for (const i of obj) {
+        i.draw();
+
     }
+
+    let tx = cam.x;
+    let ty = cam.y
+    for (let index = 0; index < 1000; index++) {
+        let arr = [];
+        for (const i of obj) {
+            arr.push(i.distance(cam.x, cam.y));
+        }
+        let d = Math.min.apply(Math, arr);
+        cam.draw(d);
+        cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
+        cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
+        if (d > 500) {
+            break;
+        }
+        if(d < 0.001){
+           
+            break;
+            
+        }
+       
+    }
+    pux.push([cam.x,cam.y]);
+    
+    cam.x = tx;
+    cam.y = ty;
+
+    for (const i of pux) {
+       drawPix(i[0],i[1]);
+
+    }
+
+    
     if (playing) {
         requestAnimationFrame(loop);
     }
@@ -105,6 +117,12 @@ function render(width, height) {
 
 function Get2DDistance() {
 
+}
+function drawPix(x, y) {
+    ctx.beginPath();
+    ctx.fillStyle = 'red';
+    ctx.fillRect(x,y,2,2);
+    ctx.stroke();
 }
 
 function drawCircle(x, y, r) {
