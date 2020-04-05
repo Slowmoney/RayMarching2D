@@ -9,11 +9,11 @@ function main() {
     window.ctx = canvas.getContext('2d');
     window.cam = new Camera(500, 500, 0);
     window.obj = [];
-    // obj.push(new Circle(100, 500, 40));
-    // obj.push(new Box(400, 400, 100));
-    // obj.push(new Line(100, 600, 100,100));
-    obj.push(new Triangle(100, 100, 300, 300,400,500));
-    //obj.push(new Circle(600, 600, 40));
+     obj.push(new Circle(100, 500, 40));
+     obj.push(new Box(400, 400, 100));
+     obj.push(new Line(100, 600, 100,100));
+    obj.push(new Triangle(100, 800, 100, 100, 300, 400));
+    obj.push(new Circle(600, 600, 40));
     canvas.addEventListener("click", (e) => {
         // console.log(e);
         cam.step();
@@ -45,11 +45,17 @@ function draw() {
     // let data = render(width,height);
     //  context.putImageData(new ImageData(data, width, height), 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (const i of obj) {
+     
+    
+    
         let tx = cam.x;
         let ty = cam.y
-        for (let index = 0; index < 10; index++) {
-            let d = i.distance(cam.x, cam.y);
+        for (let index = 0; index < 100; index++) {
+           let arr = [];
+           for (const i of obj) {
+            arr.push(i.distance(cam.x, cam.y));
+           }
+            let d = Math.min.apply(Math,arr);
             cam.draw(d);
             cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
             cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
@@ -60,9 +66,12 @@ function draw() {
         cam.x = tx;
         cam.y = ty;
 
-        i.draw();
+        
+    
+    for (const i of obj) {
+       i.draw();
+        
     }
-
     if (playing) {
         requestAnimationFrame(loop);
     }
@@ -185,7 +194,7 @@ class Triangle {
 
         if (denominator0 === 0 || denominator1 === 0 || denominator2 === 0) {
 
-            return 1;
+            return 0;
 
         }
 
@@ -205,19 +214,19 @@ class Triangle {
 
         if (ua0 >= 0 && ua0 <= 1 && ub0 >= 0 && ub0 <= 1) {
 
-            return this.distanceToLine(x,y, this.x1, this.y1, this.x2, this.y2);
+            return this.distanceToLine(x, y, this.x1, this.y1, this.x2, this.y2);
 
         } else if (ua1 >= 0 && ua1 <= 1 && ub1 >= 0 && ub1 <= 1) {
 
-            return this.distanceToLine(x,y, this.x2, this.y2, this.x3, this.y3);
+            return this.distanceToLine(x, y, this.x2, this.y2, this.x3, this.y3);
 
         } else if (ua2 >= 0 && ua2 <= 1 && ub2 >= 0 && ub2 <= 1) {
 
-            return this.distanceToLine(x,y, this.x3, this.y3, this.x1, this.y1);
+            return this.distanceToLine(x, y, this.x3, this.y3, this.x1, this.y1);
 
         } else {
 
-            return 1;
+            return 0;
 
         }
 
