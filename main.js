@@ -1,68 +1,53 @@
 
 let playing = false;
 
+
+const stepFOV = 0.001;
+const FOV = 90;
+const sFOV = stepFOV * FOV;
 var prev = new Date().getTime();
 function main() {
     window.canvas = document.getElementById('canvas');
     canvas.width = 1800;
-    canvas.height = 1800;
+    canvas.height = 1700;
     window.ctx = canvas.getContext('2d');
-    window.cam = new Camera(800, 800, 0);
+
+    window.canvasWolf = document.getElementById('wolf');
+    canvasWolf.width = 1800;
+    canvasWolf.height = 800;
+    window.ctxWolf = canvasWolf.getContext('2d');
+
+    window.cam = new Camera(100, 834, 68, 4);
     window.obj = [];
     window.pux = [];
     window.lines = [];
     // obj.push(new Plus(100, 500, 40));
-    obj.push(new Circle(600, 500, 40));
-    obj.push(new Box(300, 700, 100));
-   obj.push(new Line(0, 1800, 1500, 0));
-    obj.push(new Triangle(100, 800, 100, 100, 200, 400));
-    obj.push(new Circle(600, 600, 40));
-    canvas.addEventListener("click", (e) => {
-        // console.log(e);
-      //  cam.step();
-       // requestAnimationFrame(loop);
-    });
-    document.addEventListener("keydown", (e) => {
-         
-        switch (e.code) {
-            case "KeyW":
-                cam.up();
-                break;
-                case "KeyS":
-                    cam.down();
-                    break;
-                    case "KeyD":
-                cam.right();
-                break;
-                case "KeyA":
-                cam.left();
-                break;
-            default:
-                break;
-        }
-      
-    });
-    document.addEventListener("keyup", (e) => {  requestAnimationFrame(loop);});
+    obj.push(new Circle(600, 500, 40, { "r": 12 , "g": 0 , "b": 23}));
+    obj.push(new Box(300, 700, 100, { "r": 80 , "g": 155 , "b": 55}));
+    obj.push(new Line(0, 0, 1800, 0,{ "r": 255 , "g": 0 , "b": 255}));
+    obj.push(new Line(0, 0, 0, 1800,{ "r": 255 , "g": 0 , "b": 255}));
+    obj.push(new Line(1800, 1800, 0, 1800,{ "r": 255 , "g": 0 , "b": 255}));
+    obj.push(new Triangle(100, 800, 100, 100, 200, 400,{ "r": 255 , "g": 0 , "b": 255}));
+    obj.push(new Circle(600, 600, 40,{ "r": 80 , "g": 134 , "b": 7}));
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
     canvas.addEventListener("mousemove", (e) => {
-        //    console.log(e);
-        //    console.log(e.offsetX-cam.x);
-        //    console.log(e.offsetY-cam.y);
-        //  console.log((cam.x-e.offsetX), (cam.y -e.offsetY  ));
-
-        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI)-30;
-
-       requestAnimationFrame(loop);
+        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI) - FOV / 2;
+    });
+    canvasWolf.addEventListener("mousemove", (e) => {
+        // console.log(e);e.offsetX
+        cam.a = (e.offsetX - FOV) / 4;
+        //   console.log([e.offsetX, e.offsetY]);
     });
 }
 
 function loop(time) {
 
-
-
+    handleKeyboard();
     draw();
     update();
-
-
+    requestAnimationFrame(loop);
 }
 
 function draw() {
@@ -70,31 +55,50 @@ function draw() {
     //  context.putImageData(new ImageData(data, width, height), 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    ctxWolf.clearRect(0, 0, canvas.width, canvas.height);
     for (const i of obj) {
-        //    i.draw();
+        i.draw();
 
     }
     let ta = cam.a;
-    
-    for (let x = 0; x < 60; x++) {
+
+    for (let x = 0; x < sFOV; x += stepFOV) {
         cam.step();
         let tx = cam.x;
         let ty = cam.y
         let totalDist = 0;
+        let color = 0;
         for (var index = 0; index < 1000; index++) {
             let arr = [];
-            for (const i of obj) {
-                arr.push(i.distance(cam.x, cam.y));
+            var ic;
+            let d = obj[0].distance(cam.x, cam.y);
+            for (var i = 1; i < obj.length; i++) {
+                let k = obj[i].distance(cam.x, cam.y);
+                if (k < d) {
+                    d = k;
+                    ic = i;
+                }
+
             }
-            var d = Math.min.apply(Math, arr);
+
+
+            /// for (const i of obj) {
+            //     arr.push(i.distance(cam.x, cam.y));
+
+            //}
+            // var d = Math.min.apply(Math, arr);
+
+
+
+
 
             cam.draw(d);
             cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
             cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
-            if (d > 1000) {
-                break;
+            if (d > 5000) {
+                //   break;
             }
-            if (d < 1e-1) {
+            if (d < 1e-3) {
 
                 break;
 
@@ -102,49 +106,86 @@ function draw() {
             totalDist += d;
 
         }
-
-        let gray = 1 - (index)/ 100;
+        try {
+            color = obj[ic].color;
+        } catch (error) {
+            color = {r:10,g:10,b:10};
+        }
+        let gray = 1 - (index) / 100;
         //console.log(gray);
-        pux.push([cam.x, cam.y, gray]);
+        //  pux.push([cam.x, cam.y, gray]);
 
         cam.x = tx;
         cam.y = ty;
-        lines.push(gray);
+        lines.push([gray, 100 / totalDist, color]);
     }
 
     cam.a = ta;
 
     for (const i of pux) {
-        drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
+        //  drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
 
     }
     for (let i = 0; i < lines.length; i++) {
-        
-        
-    let h = 500*lines[i];
-        drawBox(i*15,(1000+300)-(h/2),15,h,{ "r": 120*lines[i] , "g": 90*lines[i] , "b": 40 *lines[i] }); //800 = 500
+        const padLeft = 500;
+        const w = FOV / 10;
+        let h = 500 * Math.max(lines[i][1], 0);
+        drawBox(i * w + padLeft, (0 + 400) - (h / 2), w, h, { "r": lines[i][2].r * lines[i][1], "g": lines[i][2].g * lines[i][1], "b": lines[i][2].b * lines[i][1] }); //800 = 500
 
     }
     lines = [];
-    if (playing) {
-        requestAnimationFrame(loop);
-    }
+
 }
 
 function update(dt) {
-
     let time = new Date().getTime();
     // console.log(time - prev);
     prev = time;
-
-
-
-
 }
 
 requestAnimationFrame(loop);
+function handleKeyboard() {
+    if (upPressed) {
+        cam.up();
+    } else if (downPressed) {
+        cam.down();
+    } else if (leftPressed) {
+        cam.left();
+    } else if (rightPressed) {
+        cam.right();
+    }
 
+}
+var rightPressed = false;
+var leftPressed = false;
+var upPressed = false;
+var downPressed = false;
+function keyDownHandler(e) {
 
+    if (e.code == "KeyD" || e.key == "ArrowRight") {
+        rightPressed = true;
+    }
+    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
+        leftPressed = true;
+    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
+        upPressed = true;
+    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
+        downPressed = true;
+    }
+}
+
+function keyUpHandler(e) {
+    if (e.code == "KeyD" || e.key == "ArrowRight") {
+        rightPressed = false;
+    }
+    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
+        leftPressed = false;
+    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
+        upPressed = false;
+    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
+        downPressed = false;
+    }
+}
 function render(width, height) {
     let data = new Uint8ClampedArray(4 * width * height);
     for (let w = 0; w < width; w++) {
@@ -167,12 +208,12 @@ function drawPix(x, y, color) {
     ctx.fillRect(x, y, 2, 2);
     ctx.stroke();
 }
-function drawBox(x, y,x1, y1, color) {
-    ctx.beginPath();
+function drawBox(x, y, x1, y1, color) {
+    ctxWolf.beginPath();
 
-    ctx.fillStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
-    ctx.fillRect(x, y, x1, y1);
-    ctx.stroke();
+    ctxWolf.fillStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
+    ctxWolf.fillRect(x, y, x1, y1);
+    ctxWolf.stroke();
 }
 function drawCircle(x, y, r) {
     ctx.beginPath();
@@ -180,7 +221,7 @@ function drawCircle(x, y, r) {
     ctx.stroke();
 }
 
-function drawLine(x1, y1, x2, y2,color = { "r": 255 , "g": 80 , "b": 80 } ) {
+function drawLine(x1, y1, x2, y2, color = { "r": 255, "g": 80, "b": 80 }) {
     ctx.beginPath();
     ctx.strokeStyle = 'rgb(' + color.r + ',' + color.g + ',' + color.b + ')';
     ctx.moveTo(x1, y1);
@@ -189,11 +230,12 @@ function drawLine(x1, y1, x2, y2,color = { "r": 255 , "g": 80 , "b": 80 } ) {
 }
 
 class Line {
-    constructor(x, y, x1, y1) {
+    constructor(x, y, x1, y1, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x = x;
         this.y = y;
         this.x1 = x1;
         this.y1 = y1;
+        this.color = color;
     }
     distance = (x, y) => {
 
@@ -233,14 +275,14 @@ class Line {
     }
 }
 class Triangle {
-    constructor(x1, y1, x2, y2, x3, y3) {
+    constructor(x1, y1, x2, y2, x3, y3, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
         this.x3 = x3;
         this.y3 = y3;
-
+        this.color = color;
     }
     distance = (x, y) => {
         const centerX = (this.x1 + this.x2 + this.x3) / 3;
@@ -345,10 +387,10 @@ function clamp(val, min, max) {
 
 }
 class Sin {
-    constructor(x, y, r) {
+    constructor(x, y, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x = x;
         this.y = y;
-
+        this.color = color;
     }
     distance = (x, y) => {
         // return Math.max(Math.abs(x),Math.abs(y))-1;
@@ -362,10 +404,10 @@ class Sin {
     }
 }
 class Plus {
-    constructor(x, y, r) {
+    constructor(x, y, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x = x;
         this.y = y;
-
+        this.color = color;
     }
     distance = (x, y) => {
         // ( in vec2 p, in float w, in float r )
@@ -383,10 +425,11 @@ class Plus {
     }
 }
 class Circle {
-    constructor(x, y, r) {
+    constructor(x, y, r, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x = x;
         this.y = y;
         this.r = r;
+        this.color = color;
     }
     distance = (x, y) => {
 
@@ -400,11 +443,11 @@ class Circle {
     }
 }
 class Box {
-    constructor(x, y, s) {
+    constructor(x, y, s, color = { "r": 255 , "g": 0 , "b": 255}) {
         this.x = x;
         this.y = y;
         this.s = s;
-
+        this.color = color;
     }
     distance = (x, y) => {
 
@@ -438,35 +481,49 @@ class Box {
 }
 
 class Camera {
-    constructor(x, y, a) {
+    constructor(x, y, a, speed) {
         this.x = x;
         this.y = y;
         this.a = a;
         this.spx = x;
         this.spy = y;
+        this.speed = speed;
     }
     draw = (distance) => {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, Math.round(distance), 0, Math.PI * 2, true);
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x - Math.cos(this.a / 180 * Math.PI) * distance, this.y - Math.sin(this.a / 180 * Math.PI) * distance);
-        ctx.stroke();
+        try {
+            ctx.beginPath();
+            // ctx.arc(this.x, this.y, Math.round(distance), 0, Math.PI * 2, true);
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - Math.cos(this.a / 180 * Math.PI) * distance, this.y - Math.sin(this.a / 180 * Math.PI) * distance);
+            ctx.stroke();
+        } catch (e) {
+
+        }
+
     }
     step = () => {
-        
-        if(this.a >=360){this.a=0;}
-        this.a++
+
+        if (this.a >= 360) { this.a = 0; }
+        this.a++;
     }
-    up = ()=>{
-        this.y--;
+    up = () => {
+        this.x -= Math.cos((this.a + FOV / 2) / 180 * Math.PI) * this.speed;
+        this.y -= Math.sin((this.a + FOV / 2) / 180 * Math.PI) * this.speed;
+        //this.y--;
     }
-    down = ()=>{
-        this.y++;
+    down = () => {
+        // this.y++;
+        this.x += Math.cos((this.a + FOV / 2) / 180 * Math.PI) * this.speed;
+        this.y += Math.sin((this.a + FOV / 2) / 180 * Math.PI) * this.speed;
     }
-    right = ()=>{
-        this.x++;
+    right = () => {
+        this.x -= Math.cos((this.a) / 180 * Math.PI) * this.speed;
+        this.y += Math.sin((this.a) / 180 * Math.PI) * this.speed;
+        //   this.x++;
     }
-    left = ()=>{
-        this.x--;
+    left = () => {
+        this.x += Math.cos((this.a) / 180 * Math.PI) * this.speed;
+        this.y -= Math.sin((this.a) / 180 * Math.PI) * this.speed;
+        // this.x--;
     }
 }
