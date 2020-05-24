@@ -27,7 +27,7 @@ function drawLine(x1, y1, x2, y2, color = { "r": 255, "g": 80, "b": 80 }) {
 }
 
 class Line {
-    constructor(x, y, x1, y1, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x, y, x1, y1, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x = x;
         this.y = y;
         this.x1 = x1;
@@ -72,7 +72,7 @@ class Line {
     }
 }
 class Triangle {
-    constructor(x1, y1, x2, y2, x3, y3, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x1, y1, x2, y2, x3, y3, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
@@ -184,7 +184,7 @@ function clamp(val, min, max) {
 
 }
 class Sin {
-    constructor(x, y, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x, y, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x = x;
         this.y = y;
         this.color = color;
@@ -201,7 +201,7 @@ class Sin {
     }
 }
 class Plus {
-    constructor(x, y, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x, y, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x = x;
         this.y = y;
         this.color = color;
@@ -222,7 +222,7 @@ class Plus {
     }
 }
 class Circle {
-    constructor(x, y, r, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x, y, r, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x = x;
         this.y = y;
         this.r = r;
@@ -240,7 +240,7 @@ class Circle {
     }
 }
 class Box {
-    constructor(x, y, s, color = { "r": 255 , "g": 0 , "b": 255}) {
+    constructor(x, y, s, color = { "r": 255, "g": 0, "b": 255 }) {
         this.x = x;
         this.y = y;
         this.s = s;
@@ -325,6 +325,39 @@ class Camera {
         // this.x--;
     }
 }
+window.canvas = document.getElementById('canvas');
+canvas.width = 1800;
+canvas.height = 1700;
+window.ctx = canvas.getContext('2d');
+
+window.canvasWolf = document.getElementById('wolf');
+canvasWolf.width = 1800;
+canvasWolf.height = 800;
+window.ctxWolf = canvasWolf.getContext('2d');
+
+window.cam = new Camera(100, 834, 68, 4);
+window.obj = [];
+window.pux = [];
+window.lines = [];
+// obj.push(new Plus(100, 500, 40));
+obj.push(new Circle(600, 500, 40, { "r": 12, "g": 0, "b": 23 }));
+obj.push(new Box(300, 700, 100, { "r": 80, "g": 155, "b": 55 }));
+obj.push(new Line(0, 0, 1800, 0, { "r": 255, "g": 0, "b": 255 }));
+obj.push(new Line(0, 0, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
+obj.push(new Line(1800, 1800, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
+obj.push(new Triangle(100, 800, 100, 100, 200, 400, { "r": 255, "g": 0, "b": 255 }));
+obj.push(new Circle(600, 600, 40, { "r": 80, "g": 134, "b": 7 }));
+document.addEventListener("keydown", keyDownHandler, false);
+document.addEventListener("keyup", keyUpHandler, false);
+
+canvas.addEventListener("mousemove", (e) => {
+    cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI) - FOV / 2;
+});
+canvasWolf.addEventListener("mousemove", (e) => {
+    // console.log(e);e.offsetX
+    cam.a = (e.offsetX - FOV) / 4;
+    //   console.log([e.offsetX, e.offsetY]);
+});
 let playing = false;
 
 
@@ -333,39 +366,7 @@ const FOV = 120;
 const sFOV = stepFOV * FOV;
 var prev = new Date().getTime();
 function main() {
-    window.canvas = document.getElementById('canvas');
-    canvas.width = 1800;
-    canvas.height = 1700;
-    window.ctx = canvas.getContext('2d');
 
-    window.canvasWolf = document.getElementById('wolf');
-    canvasWolf.width = 1800;
-    canvasWolf.height = 800;
-    window.ctxWolf = canvasWolf.getContext('2d');
-
-    window.cam = new Camera(100, 834, 68, 4);
-    window.obj = [];
-    window.pux = [];
-    window.lines = [];
-    // obj.push(new Plus(100, 500, 40));
-    obj.push(new Circle(600, 500, 40, { "r": 12, "g": 0, "b": 23 }));
-    obj.push(new Box(300, 700, 100, { "r": 80, "g": 155, "b": 55 }));
-    obj.push(new Line(0, 0, 1800, 0, { "r": 255, "g": 0, "b": 255 }));
-    obj.push(new Line(0, 0, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
-    obj.push(new Line(1800, 1800, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
-    obj.push(new Triangle(100, 800, 100, 100, 200, 400, { "r": 255, "g": 0, "b": 255 }));
-    obj.push(new Circle(600, 600, 40, { "r": 80, "g": 134, "b": 7 }));
-    document.addEventListener("keydown", keyDownHandler, false);
-    document.addEventListener("keyup", keyUpHandler, false);
-
-    canvas.addEventListener("mousemove", (e) => {
-        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI) - FOV / 2;
-    });
-    canvasWolf.addEventListener("mousemove", (e) => {
-        // console.log(e);e.offsetX
-        cam.a = (e.offsetX - FOV) / 4;
-        //   console.log([e.offsetX, e.offsetY]);
-    });
 }
 
 function loop(time) {
@@ -407,17 +408,6 @@ function draw() {
 
             }
 
-
-            /// for (const i of obj) {
-            //     arr.push(i.distance(cam.x, cam.y));
-
-            //}
-            // var d = Math.min.apply(Math, arr);
-
-
-
-
-
             cam.draw(d);
             cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
             cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
@@ -438,9 +428,6 @@ function draw() {
             color = { r: 10, g: 10, b: 10 };
         }
         let gray = 1 - (index) / 100;
-        //console.log(gray);
-        //  pux.push([cam.x, cam.y, gray]);
-
         cam.x = tx;
         cam.y = ty;
         lines.push([gray, 100 / totalDist, color]);
@@ -448,10 +435,6 @@ function draw() {
 
     cam.a = ta;
 
-    for (const i of pux) {
-        //  drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
-
-    }
     console.log(lines.length);
     for (let i = 0; i < lines.length; i++) {
         const padLeft = 500;
