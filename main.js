@@ -1,206 +1,3 @@
-
-let playing = false;
-
-
-const stepFOV = 0.001;
-const FOV = 90;
-const sFOV = stepFOV * FOV;
-var prev = new Date().getTime();
-function main() {
-    window.canvas = document.getElementById('canvas');
-    canvas.width = 1800;
-    canvas.height = 1700;
-    window.ctx = canvas.getContext('2d');
-
-    window.canvasWolf = document.getElementById('wolf');
-    canvasWolf.width = 1800;
-    canvasWolf.height = 800;
-    window.ctxWolf = canvasWolf.getContext('2d');
-
-    window.cam = new Camera(100, 834, 68, 4);
-    window.obj = [];
-    window.pux = [];
-    window.lines = [];
-    // obj.push(new Plus(100, 500, 40));
-    obj.push(new Circle(600, 500, 40, { "r": 12 , "g": 0 , "b": 23}));
-    obj.push(new Box(300, 700, 100, { "r": 80 , "g": 155 , "b": 55}));
-    obj.push(new Line(0, 0, 1800, 0,{ "r": 255 , "g": 0 , "b": 255}));
-    obj.push(new Line(0, 0, 0, 1800,{ "r": 255 , "g": 0 , "b": 255}));
-    obj.push(new Line(1800, 1800, 0, 1800,{ "r": 255 , "g": 0 , "b": 255}));
-    obj.push(new Triangle(100, 800, 100, 100, 200, 400,{ "r": 255 , "g": 0 , "b": 255}));
-    obj.push(new Circle(600, 600, 40,{ "r": 80 , "g": 134 , "b": 7}));
-    document.addEventListener("keydown", keyDownHandler, false);
-    document.addEventListener("keyup", keyUpHandler, false);
-
-    canvas.addEventListener("mousemove", (e) => {
-        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI) - FOV / 2;
-    });
-    canvasWolf.addEventListener("mousemove", (e) => {
-        // console.log(e);e.offsetX
-        cam.a = (e.offsetX - FOV) / 4;
-        //   console.log([e.offsetX, e.offsetY]);
-    });
-}
-
-function loop(time) {
-
-    handleKeyboard();
-    draw();
-    update();
-    requestAnimationFrame(loop);
-}
-
-function draw() {
-    // let data = render(width,height);
-    //  context.putImageData(new ImageData(data, width, height), 0, 0)
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctxWolf.clearRect(0, 0, canvas.width, canvas.height);
-    for (const i of obj) {
-        i.draw();
-
-    }
-    let ta = cam.a;
-
-    for (let x = 0; x < sFOV; x += stepFOV) {
-        cam.step();
-        let tx = cam.x;
-        let ty = cam.y
-        let totalDist = 0;
-        let color = 0;
-        for (var index = 0; index < 1000; index++) {
-            let arr = [];
-            var ic;
-            let d = obj[0].distance(cam.x, cam.y);
-            for (var i = 1; i < obj.length; i++) {
-                let k = obj[i].distance(cam.x, cam.y);
-                if (k < d) {
-                    d = k;
-                    ic = i;
-                }
-
-            }
-
-
-            /// for (const i of obj) {
-            //     arr.push(i.distance(cam.x, cam.y));
-
-            //}
-            // var d = Math.min.apply(Math, arr);
-
-
-
-
-
-            cam.draw(d);
-            cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
-            cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
-            if (d > 5000) {
-                //   break;
-            }
-            if (d < 1e-3) {
-
-                break;
-
-            }
-            totalDist += d;
-
-        }
-        try {
-            color = obj[ic].color;
-        } catch (error) {
-            color = {r:10,g:10,b:10};
-        }
-        let gray = 1 - (index) / 100;
-        //console.log(gray);
-        //  pux.push([cam.x, cam.y, gray]);
-
-        cam.x = tx;
-        cam.y = ty;
-        lines.push([gray, 100 / totalDist, color]);
-    }
-
-    cam.a = ta;
-
-    for (const i of pux) {
-        //  drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
-
-    }
-    for (let i = 0; i < lines.length; i++) {
-        const padLeft = 500;
-        const w = FOV / 10;
-        let h = 500 * Math.max(lines[i][1], 0);
-        drawBox(i * w + padLeft, (0 + 400) - (h / 2), w, h, { "r": lines[i][2].r * lines[i][1], "g": lines[i][2].g * lines[i][1], "b": lines[i][2].b * lines[i][1] }); //800 = 500
-
-    }
-    lines = [];
-
-}
-
-function update(dt) {
-    let time = new Date().getTime();
-    // console.log(time - prev);
-    prev = time;
-}
-
-requestAnimationFrame(loop);
-function handleKeyboard() {
-    if (upPressed) {
-        cam.up();
-    } else if (downPressed) {
-        cam.down();
-    } else if (leftPressed) {
-        cam.left();
-    } else if (rightPressed) {
-        cam.right();
-    }
-
-}
-var rightPressed = false;
-var leftPressed = false;
-var upPressed = false;
-var downPressed = false;
-function keyDownHandler(e) {
-
-    if (e.code == "KeyD" || e.key == "ArrowRight") {
-        rightPressed = true;
-    }
-    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
-        leftPressed = true;
-    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
-        upPressed = true;
-    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
-        downPressed = true;
-    }
-}
-
-function keyUpHandler(e) {
-    if (e.code == "KeyD" || e.key == "ArrowRight") {
-        rightPressed = false;
-    }
-    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
-        leftPressed = false;
-    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
-        upPressed = false;
-    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
-        downPressed = false;
-    }
-}
-function render(width, height) {
-    let data = new Uint8ClampedArray(4 * width * height);
-    for (let w = 0; w < width; w++) {
-        for (let h = 0; h < height; h++) {
-
-
-        }
-
-    }
-    return data;
-}
-
-function Get2DDistance() {
-
-}
 function drawPix(x, y, color) {
     ctx.beginPath();
 
@@ -504,7 +301,8 @@ class Camera {
     step = () => {
 
         if (this.a >= 360) { this.a = 0; }
-        this.a++;
+        //this.a++;
+        this.a += 1;
     }
     up = () => {
         this.x -= Math.cos((this.a + FOV / 2) / 180 * Math.PI) * this.speed;
@@ -526,4 +324,207 @@ class Camera {
         this.y -= Math.sin((this.a) / 180 * Math.PI) * this.speed;
         // this.x--;
     }
+}
+let playing = false;
+
+
+const stepFOV = 0.0001;
+const FOV = 120;
+const sFOV = stepFOV * FOV;
+var prev = new Date().getTime();
+function main() {
+    window.canvas = document.getElementById('canvas');
+    canvas.width = 1800;
+    canvas.height = 1700;
+    window.ctx = canvas.getContext('2d');
+
+    window.canvasWolf = document.getElementById('wolf');
+    canvasWolf.width = 1800;
+    canvasWolf.height = 800;
+    window.ctxWolf = canvasWolf.getContext('2d');
+
+    window.cam = new Camera(100, 834, 68, 4);
+    window.obj = [];
+    window.pux = [];
+    window.lines = [];
+    // obj.push(new Plus(100, 500, 40));
+    obj.push(new Circle(600, 500, 40, { "r": 12, "g": 0, "b": 23 }));
+    obj.push(new Box(300, 700, 100, { "r": 80, "g": 155, "b": 55 }));
+    obj.push(new Line(0, 0, 1800, 0, { "r": 255, "g": 0, "b": 255 }));
+    obj.push(new Line(0, 0, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
+    obj.push(new Line(1800, 1800, 0, 1800, { "r": 255, "g": 0, "b": 255 }));
+    obj.push(new Triangle(100, 800, 100, 100, 200, 400, { "r": 255, "g": 0, "b": 255 }));
+    obj.push(new Circle(600, 600, 40, { "r": 80, "g": 134, "b": 7 }));
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+
+    canvas.addEventListener("mousemove", (e) => {
+        cam.a = (Math.atan2(cam.y - e.offsetY, cam.x - e.offsetX) * 180 / Math.PI) - FOV / 2;
+    });
+    canvasWolf.addEventListener("mousemove", (e) => {
+        // console.log(e);e.offsetX
+        cam.a = (e.offsetX - FOV) / 4;
+        //   console.log([e.offsetX, e.offsetY]);
+    });
+}
+
+function loop(time) {
+
+    handleKeyboard();
+    draw();
+    update();
+    requestAnimationFrame(loop);
+}
+
+function draw() {
+    // let data = render(width,height);
+    //  context.putImageData(new ImageData(data, width, height), 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctxWolf.clearRect(0, 0, canvas.width, canvas.height);
+    for (const i of obj) {
+        i.draw();
+
+    }
+    let ta = cam.a;
+
+    for (let x = 0; x < sFOV; x += stepFOV) {
+        cam.step();
+        let tx = cam.x;
+        let ty = cam.y
+        let totalDist = 0;
+        let color = 0;
+        for (var index = 0; index < 1000; index++) {
+            let arr = [];
+            var ic;
+            let d = obj[0].distance(cam.x, cam.y);
+            for (var i = 1; i < obj.length; i++) {
+                let k = obj[i].distance(cam.x, cam.y);
+                if (k < d) {
+                    d = k;
+                    ic = i;
+                }
+
+            }
+
+
+            /// for (const i of obj) {
+            //     arr.push(i.distance(cam.x, cam.y));
+
+            //}
+            // var d = Math.min.apply(Math, arr);
+
+
+
+
+
+            cam.draw(d);
+            cam.x = cam.x - Math.cos(cam.a / 180 * Math.PI) * d;
+            cam.y = cam.y - Math.sin(cam.a / 180 * Math.PI) * d;
+            if (d > 5000) {
+                //   break;
+            }
+            if (d < 1e-3) {
+
+                break;
+
+            }
+            totalDist += d;
+
+        }
+        try {
+            color = obj[ic].color;
+        } catch (error) {
+            color = { r: 10, g: 10, b: 10 };
+        }
+        let gray = 1 - (index) / 100;
+        //console.log(gray);
+        //  pux.push([cam.x, cam.y, gray]);
+
+        cam.x = tx;
+        cam.y = ty;
+        lines.push([gray, 100 / totalDist, color]);
+    }
+
+    cam.a = ta;
+
+    for (const i of pux) {
+        //  drawPix(i[0], i[1], { "r": 255 * i[2], "g": 0 * i[2], "b": 0 * i[2] });
+
+    }
+    console.log(lines.length);
+    for (let i = 0; i < lines.length; i++) {
+        const padLeft = 500;
+        const w = FOV / 10;
+        let h = 500 * Math.max(lines[i][1], 0);
+        drawBox(i * w + padLeft, (0 + 400) - (h / 2), w, h, { "r": lines[i][2].r * lines[i][1], "g": lines[i][2].g * lines[i][1], "b": lines[i][2].b * lines[i][1] }); //800 = 500
+
+    }
+    lines = [];
+
+}
+
+function update(dt) {
+    let time = new Date().getTime();
+    // console.log(time - prev);
+    prev = time;
+}
+
+requestAnimationFrame(loop);
+function handleKeyboard() {
+    if (upPressed) {
+        cam.up();
+    } else if (downPressed) {
+        cam.down();
+    } else if (leftPressed) {
+        cam.left();
+    } else if (rightPressed) {
+        cam.right();
+    }
+
+}
+var rightPressed = false;
+var leftPressed = false;
+var upPressed = false;
+var downPressed = false;
+function keyDownHandler(e) {
+
+    if (e.code == "KeyD" || e.key == "ArrowRight") {
+        rightPressed = true;
+    }
+    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
+        leftPressed = true;
+    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
+        upPressed = true;
+    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
+        downPressed = true;
+    }
+}
+
+function keyUpHandler(e) {
+    if (e.code == "KeyD" || e.key == "ArrowRight") {
+        rightPressed = false;
+    }
+    else if (e.code == "KeyA" || e.key == "ArrowLeft") {
+        leftPressed = false;
+    } else if (e.code == "KeyW" || e.key == "ArrowUp") {
+        upPressed = false;
+    } else if (e.code == "KeyS" || e.key == "ArrowDown") {
+        downPressed = false;
+    }
+}
+function render(width, height) {
+    let data = new Uint8ClampedArray(4 * width * height);
+    for (let w = 0; w < width; w++) {
+        for (let h = 0; h < height; h++) {
+
+
+        }
+
+    }
+    return data;
+}
+
+function Get2DDistance() {
+
 }
